@@ -226,8 +226,7 @@ The hazard map and dashboard can still be viewed on any browser.
 ## 🔧 Tech Stack
 
 Frontend
-- HTML / React
-- AnyGravity
+- HTML / React/CSS
 - Leaflet.js
 
 Backend
@@ -239,7 +238,7 @@ Phone Sensor APIs
 - Geolocation API
 
 Hosting
-- Vercel / Netlify
+- Vercel
 
 ------------------------------------------------------------
 
