@@ -34,15 +34,15 @@ Communities need a system that can automatically detect road hazards in real tim
 SenseStreet transforms smartphones into mobile road monitoring sensors.
 
 Smartphone Sensors
-(Accelerometer + Gyroscope + GPS)
-        ↓
-Detection Logic
-        ↓
-Firebase Database
-        ↓
-Live Hazard Map
-        ↓
-Community Road Safety Network
+(Accelerometer + Gyroscope + GPS) <br>
+        ↓ <br>
+Detection Logic <br>
+        ↓ <br>
+Firebase Database <br>
+        ↓ <br>
+Live Hazard Map <br>
+        ↓ <br>
+Community Road Safety Network 
 
 Every phone contributes to a crowdsourced road safety system that helps identify dangerous road conditions.
 
