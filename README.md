@@ -1,110 +1,309 @@
-<div align="center">
-  <img width="1200" height="475" alt="SenseStreet Banner" src="banner.jpg" />  <!-- Replace with your actual banner image filename -->
-</div>
+# 🚦 SenseStreet
+## Smart Community Road Safety Network
 
-# 🚦 SenseStreet — Smart Community Road Safety Network
+SenseStreet turns everyday smartphones into road safety sensors.
 
-> Turn every smartphone into a road safety sensor: automatically detect potholes, sudden braking, and crashes using phone sensors — then map hazards in real time to make roads safer for everyone.
+Using built-in phone sensors like the accelerometer, gyroscope, and GPS, SenseStreet automatically detects potholes, sudden braking zones, and possible crashes, mapping them in real time to help communities avoid dangerous roads.
 
-## 📌 Overview
+Instead of relying only on manual reports, SenseStreet creates a distributed road safety network powered by the phones people already carry.
 
-Road accidents often happen due to hidden potholes, poor road conditions, sudden obstacles, or crashes — but most reporting is manual and delayed.  
-**SenseStreet** solves this by crowdsourcing real-time hazard detection: smartphones use built-in **accelerometer**, **gyroscope**, and **GPS** to automatically identify dangerous events and push them to a shared live map.
+------------------------------------------------------------
 
-No more guesswork — communities get instant alerts about risky roads, helping drivers avoid hazards and enabling faster emergency response.
+## 🌍 The Problem
 
-## 🤖 How It Works
+Road accidents often occur because drivers encounter hazards too late.
 
-Smartphone Sensors  
-(Accelerometer + Gyroscope + GPS)  
-↓  
-On-device Detection Logic (simple thresholds + rules)  
-↓  
-Hazard data sent to Firebase (when online, buffered offline)  
-↓  
-Live Hazard Map + Safety Dashboard (Leaflet.js frontend)
+Common causes include:
 
-Every participating phone becomes part of a distributed road monitoring network.
+- Hidden potholes
+- Poor road conditions
+- Dangerous curves
+- Sudden obstacles
+- Lack of hazard awareness
+- Delayed emergency response
 
-## 🛠 Initial Vision
+Most navigation apps rely heavily on manual reporting.  
+This means hazards are usually reported only after many people have already encountered them.
 
-- Fully background service on Android/iOS (using DeviceMotion API + Geolocation)
-- Offline buffering of detections (IndexedDB or similar)
-- Real-time syncing via Firebase
-- AI-enhanced detection (future ML models on sensor data)
-- Community alerts, geofencing notifications, safety scoring per road segment
+Communities need a system that can automatically detect road hazards in real time.
 
-## 🚧 Current Implementation (Hackathon Version)
+------------------------------------------------------------
 
-A **Progressive Web App (PWA)** that demonstrates core automatic detection:
+## 💡 Our Idea
 
-- ✅ Start Road Scan → access motion + GPS sensors
-- ✅ Real-time graphs for acceleration, gyroscope, speed
-- ✅ Automatic pothole / sudden brake / crash detection using threshold rules
-- ✅ Offline buffering (events stored locally when no network)
-- ✅ Sync to Firebase on reconnect → markers appear on shared map
-- ✅ Live hazard map with icons (🕳️ pothole, ⚠️ hazard, 🚨 crash)
-- ✅ Simple road safety score calculation per area
-- ✅ Manual hazard reporting fallback
+SenseStreet transforms smartphones into mobile road monitoring sensors.
 
-<img src="screenshot-demo.png" alt="SenseStreet Demo Screenshot" />  
-<!-- Replace with your actual screenshot filename, e.g. a map with markers or sensor graph -->
+Smartphone Sensors
+(Accelerometer + Gyroscope + GPS)
+        ↓
+Detection Logic
+        ↓
+Firebase Database
+        ↓
+Live Hazard Map
+        ↓
+Community Road Safety Network
 
-## 🎯 Goal
+Every phone contributes to a crowdsourced road safety system that helps identify dangerous road conditions.
 
-Build a scalable, community-driven road safety platform that reduces accidents by making hazard data visible and actionable in real time — starting from everyday smartphones.
+------------------------------------------------------------
 
-## Try it (Live Demo)
+## ⭐ Key Features
 
-**[SenseStreet Live](https://sensestreet.vercel.app)**  
-(or your deployed URL — e.g. Vercel/Netlify)
+### 1. Automatic Pothole Detection
 
-**Note:** Best experienced on a mobile phone. Add to home screen for full PWA/standalone mode.
+When a vehicle hits a pothole, the phone experiences a sudden vertical acceleration spike.
 
-## 🚀 Main Features (Hackathon MVP)
+Detection rule:
 
-1. **Automatic Pothole Detection**  
-   Sudden vertical acceleration spike + speed > 15 km/h → 🕳️ Pothole marker
+IF acceleration > threshold  
+AND GPS speed > 15 km/h  
+THEN pothole detected
 
-2. **Sudden Braking / Hazard Detection**  
-   Sharp deceleration + speed > 20 km/h → ⚠️ Hazard zone
+Result:
 
-3. **Crash Detection (Showstopper)**  
-   Extreme acceleration + gyro rotation + speed drop → 🚨 Crash alert + location saved
+Pothole detected  
+Location saved to database  
+Marker appears on map
 
-4. **Live Hazard Map**  
-   Leaflet.js map with real-time markers and color-coded risk zones (🟢 Safe / 🟡 Moderate / 🔴 Dangerous)
+------------------------------------------------------------
 
-5. **Road Safety Score**  
-   Simple formula:  
-   `Safety Score = 100 - (potholes × 5) - (crashes × 10) - (brakes × 3)`  
-   Displayed per road/area
+### 2. Sudden Brake / Hazard Detection
 
-6. **Offline Support**  
-   Detections buffered locally → auto-sync when online
+Sudden deceleration may indicate:
 
-7. **Manual Reporting**  
-   Quick buttons to report pothole, accident, broken light, etc.
+- obstacle on road
+- animal crossing
+- dangerous curve
+- unexpected traffic
 
-8. **Live Sensor Dashboard**  
-   Real-time graphs of acceleration (X/Y/Z), gyro, GPS speed — looks scientific in demos!
+Detection rule:
+
+IF acceleration change < -threshold  
+AND speed > 20 km/h  
+THEN sudden braking event
+
+Result:
+
+Hazard zone detected  
+Marker added to map
+
+------------------------------------------------------------
+
+### 3. Crash Detection
+
+SenseStreet detects possible crashes using multiple signals:
+
+- very high acceleration spike
+- large gyroscope rotation
+- sudden drop in GPS speed
+
+Rule example:
+
+IF acceleration > crashThreshold  
+AND gyroscope change is large  
+AND speed drops rapidly  
+THEN crash detected
+
+Result:
+
+Crash detected  
+Location saved  
+Emergency alert triggered
+
+------------------------------------------------------------
+
+### 4. Live Hazard Map
+
+Using Leaflet.js, SenseStreet visualizes hazards on an interactive map.
+
+Markers represent different types of risks:
+
+Pothole  
+Hazard Zone  
+Crash Location
+
+Drivers and communities can instantly see dangerous areas in real time.
+
+------------------------------------------------------------
+
+### 5. Road Safety Score
+
+SenseStreet calculates a safety score for each road area.
+
+Safety Score =
+
+100
+- (potholes × 5)
+- (crashes × 10)
+- (sudden brakes × 3)
+
+Example:
+
+MG Road  
+Safety Score: 41 / 100  
+High Risk Zone
+
+This helps identify dangerous roads at a glance.
+
+------------------------------------------------------------
+
+### 6. Manual Hazard Reporting
+
+Users can also report hazards manually.
+
+Report options:
+
+- pothole
+- accident
+- broken streetlight
+- unsafe road
+
+Reports are immediately added to the map.
+
+------------------------------------------------------------
+
+### 7. Live Sensor Dashboard
+
+SenseStreet includes a live sensor dashboard showing real-time phone data:
+
+- Acceleration (X Y Z)
+- Gyroscope
+- GPS speed
+
+Graphs update live as the phone moves.
+------------------------------------------------------------
+## 🧠 Why We Don't Use Machine Learning
+
+Many modern systems rely heavily on machine learning models such as CNNs or deep neural networks for detection tasks.
+
+However, SenseStreet intentionally avoids heavy machine learning models and instead uses efficient rule-based sensor logic.
+
+This decision was made for several important reasons.
+
+### 1. Real-Time Processing
+Machine learning models can introduce latency and require significant computation.
+SenseStreet uses simple threshold-based detection, allowing events to be detected instantly.
+
+### 2. Energy Efficiency
+Smartphones continuously collecting sensor data need to conserve battery.
+Lightweight detection logic consumes far less power than running ML inference.
+
+### 3. Accessibility
+Our system can run on any smartphone without requiring powerful processors or GPUs.
+
+### 4. Transparency
+Rule-based detection is easy to understand and explain.
+Every hazard detection can be traced directly to sensor readings and thresholds.
+
+### 5. Scalability
+Because the system is lightweight, it can scale to thousands of devices without heavy cloud processing.
+
+By focusing on efficient sensor logic instead of complex models, SenseStreet demonstrates that powerful safety systems can be built using simple and accessible technology.
+------------------------------------------------------------
+
+## 📱 Platform Support
+
+SenseStreet currently runs on *mobile devices* because it relies on built-in smartphone sensors.
+
+Required sensors include:
+
+- Accelerometer
+- Gyroscope
+- GPS
+
+These sensors are necessary for detecting road hazards.
+
+Since most laptops and desktop computers do not have motion sensors, the road scanning feature is designed to run directly on smartphones.
+
+The hazard map and dashboard can still be viewed on any browser.
+
+------------------------------------------------------------
 
 ## 🔧 Tech Stack
 
-- **Frontend**: HTML / React (or Vanilla JS) + Leaflet.js for maps  
-- **Sensors**: DeviceMotion API, DeviceOrientation API, Geolocation API  
-- **Offline / Sync**: Service Worker + IndexedDB (buffer) + Background Sync API  
-- **Backend / Storage**: Firebase Firestore (hazards collection)  
-- **Hosting**: Vercel / Netlify / Render  
-- **PWA Features**: Web App Manifest + Service Worker for installability & offline
+Frontend
+- HTML / React
+- AnyGravity
+- Leaflet.js
 
-**Firestore Example Document**:
-```json
+Backend
+- Firebase Firestore
+
+Phone Sensor APIs
+- DeviceMotion API
+- DeviceOrientation API
+- Geolocation API
+
+Hosting
+- Vercel / Netlify
+
+------------------------------------------------------------
+
+## ☁️ Firebase Database Structure
+
+Collection: hazards
+
+Example document:
+
 {
-  "type": "pothole",
-  "latitude": 8.5241,
-  "longitude": 76.9366,
-  "intensity": 22,
-  "timestamp": 1741362000000,
-  "deviceId": "anon-123"
+  type: "pothole",
+  latitude: 9.9816,
+  longitude: 76.2999,
+  intensity: 18,
+  timestamp: 171000000
 }
+
+------------------------------------------------------------
+
+## 🧪 Demo Plan
+
+Step 1  
+Open the dashboard on a laptop.
+
+Step 2  
+Open SenseStreet on a phone and press:
+
+Start Road Scan
+
+Step 3  
+Tap the phone on a table.
+
+System response:
+
+Pothole detected  
+Saving location
+
+Marker appears on the map.
+
+Step 4  
+Shake the phone strongly.
+
+System response:
+
+Crash detected  
+Emergency alert triggered
+
+------------------------------------------------------------
+
+## 🌍 Impact
+
+SenseStreet creates a crowdsourced road intelligence network.
+
+Benefits include:
+
+- Early hazard detection
+- Safer navigation
+- Faster accident awareness
+- Community safety data
+- Improved road monitoring
+
+With enough users, SenseStreet could build real-time road safety maps for entire cities.
+
+------------------------------------------------------------
+
+## 🚀 Vision
+
+Every smartphone can become a road safety sensor.
+
+By leveraging sensors already present in modern devices, SenseStreet demonstrates how technology can build a scalable, low-cost system that helps make streets safer for everyone.
