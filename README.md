@@ -39,12 +39,10 @@ SenseStreet transforms smartphones into mobile road monitoring sensors.
 
 ```mermaid
 flowchart LR
-A[Smartphone Sensors<br>(Accelerometer + Gyroscope + GPS)] --> B[Detection Logic]
+A[Smartphone Sensors] --> B[Detection Logic]
 B --> C[Firebase Database]
 C --> D[Live Hazard Map]
 D --> E[Community Road Safety Network]
-
-Every phone contributes to a crowdsourced road safety system that helps identify dangerous road conditions.
 ```
 ------------------------------------------------------------
 
