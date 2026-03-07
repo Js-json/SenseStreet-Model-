@@ -1,7 +1,7 @@
 <p align="center">
   <img src="assets/sensestreet-banner.png" alt="SenseStreet Banner" width="100%">
 </p>
-# 🚦 SenseStreet
+#🚦 SenseStreet
 
 ## Smart Community Road Safety Network
 
