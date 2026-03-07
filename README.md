@@ -2,6 +2,7 @@
   <img src="assets/sensestreet-banner.png" alt="SenseStreet Banner" width="100%">
 </p>
 # 🚦 SenseStreet
+
 ## Smart Community Road Safety Network
 
 SenseStreet turns everyday smartphones into road safety sensors.
