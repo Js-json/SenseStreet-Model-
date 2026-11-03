@@ -67,7 +67,7 @@ body {
   border-color: rgba(99, 102, 241, 0.4);
   box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
 }
-.leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+
 /* ===== Gradient Background Orbs ===== */
 .bg-orb {
   position: fixed;
