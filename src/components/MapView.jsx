@@ -57,10 +57,10 @@ export default function MapView({ hazards = [], center = [9.98, 76.29], zoom = 1
         style={{ height: '100%', width: '100%', minHeight: 300 }}
         zoomControl={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
+      <TileLayer
+     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+   />
         <RecenterMap center={center} />
         {hazards.map((h, i) => (
           <Marker key={h.id || i} position={[h.latitude, h.longitude]} icon={getIcon(h.type)}>
