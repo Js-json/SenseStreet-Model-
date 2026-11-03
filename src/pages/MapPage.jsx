@@ -51,12 +51,12 @@ export default function MapPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MapIcon size={24} className="text-cyan-400" />
+              <MapIcon size={24} className="text-zinc-900" />
               Hazard Map
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-zinc-500">
               {filtered.length} hazards detected
-              {usingDemo && <span className="text-amber-400 ml-2">(Demo Data)</span>}
+              {usingDemo && <span className="text-amber-600 ml-2">(Demo Data)</span>}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -78,8 +78,8 @@ export default function MapPage() {
               onClick={() => setFilter(t)}
               className={`px-4 py-2 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition-all ${
                 filter === t
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:border-slate-600'
+                  ? 'bg-zinc-900 text-white border border-zinc-900'
+                  : 'bg-white text-zinc-600 border border-zinc-200 hover:border-zinc-300'
               }`}
             >
               {t === 'all' ? `All (${hazards.length})` : `${t.replace('_', ' ')} (${hazards.filter(h => h.type === t).length})`}
@@ -96,7 +96,7 @@ export default function MapPage() {
               center={center}
               zoom={14}
               style={{ height: '100%' }}
-              className="border border-slate-700/50"
+              className="border border-zinc-200"
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function MapPage() {
                   <HazardCard key={h.id} hazard={h} compact />
                 ))}
                 {filtered.length === 0 && (
-                  <div className="text-center text-slate-500 py-8 text-sm">No hazards found</div>
+                  <div className="text-center text-zinc-500 py-8 text-sm">No hazards found</div>
                 )}
               </div>
             </div>

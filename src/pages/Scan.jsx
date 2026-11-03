@@ -136,13 +136,13 @@ export default function Scan() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">Road Scan</h1>
-            <p className="text-sm text-slate-400">Real-time sensor monitoring</p>
+            <p className="text-sm text-zinc-500">Real-time sensor monitoring</p>
           </div>
           <div className="flex items-center gap-3">
             {isScanning && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
                 <div className="pulse-dot" />
-                <span className="text-xs font-medium text-emerald-400">LIVE</span>
+                <span className="text-xs font-medium text-emerald-700">LIVE</span>
               </div>
             )}
           </div>
@@ -162,38 +162,38 @@ export default function Scan() {
             </button>
           )}
           {sensorPermission === false && (
-            <p className="text-sm text-red-400 mt-3">⚠️ Sensor permission denied. Please enable in device settings.</p>
+            <p className="text-sm text-red-600 mt-3">⚠️ Sensor permission denied. Please enable in device settings.</p>
           )}
         </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="glass-card stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.12)' }}>
-              <Gauge size={22} className="text-indigo-400" />
+            <div className="stat-icon" style={{ background: 'rgba(24, 24, 27, 0.06)' }}>
+              <Gauge size={22} className="text-zinc-900" />
             </div>
-            <span className="stat-value text-indigo-400">{currentAcc.toFixed(1)}</span>
+            <span className="stat-value text-zinc-900">{currentAcc.toFixed(1)}</span>
             <span className="stat-label">Accel (m/s²)</span>
           </div>
           <div className="glass-card stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(6, 182, 212, 0.12)' }}>
-              <Radar size={22} className="text-cyan-400" />
+            <div className="stat-icon" style={{ background: 'rgba(24, 24, 27, 0.06)' }}>
+              <Radar size={22} className="text-zinc-900" />
             </div>
-            <span className="stat-value text-cyan-400">{currentGyro.toFixed(1)}</span>
+            <span className="stat-value text-zinc-900">{currentGyro.toFixed(1)}</span>
             <span className="stat-label">Gyro (rad/s)</span>
           </div>
           <div className="glass-card stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.12)' }}>
-              <MapPin size={22} className="text-emerald-400" />
+            <div className="stat-icon" style={{ background: 'rgba(21, 128, 61, 0.1)' }}>
+              <MapPin size={22} className="text-emerald-700" />
             </div>
-            <span className="stat-value text-emerald-400">{gpsData.speed.toFixed(0)}</span>
+            <span className="stat-value text-emerald-700">{gpsData.speed.toFixed(0)}</span>
             <span className="stat-label">Speed (km/h)</span>
           </div>
           <div className="glass-card stat-card">
             <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.12)' }}>
-              <AlertTriangle size={22} className="text-red-400" />
+              <AlertTriangle size={22} className="text-red-600" />
             </div>
-            <span className="stat-value text-red-400">{hazardCount}</span>
+            <span className="stat-value text-red-600">{hazardCount}</span>
             <span className="stat-label">Hazards</span>
           </div>
         </div>
@@ -201,24 +201,24 @@ export default function Scan() {
         {/* GPS Info */}
         <div className="glass-card p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <MapPin size={14} className="text-emerald-400" />
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">GPS Location</span>
+            <MapPin size={14} className="text-emerald-700" />
+            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">GPS Location</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-slate-500 text-xs">Latitude</span>
+              <span className="text-zinc-500 text-xs">Latitude</span>
               <div className="font-mono font-semibold">{gpsData.latitude.toFixed(6)}</div>
             </div>
             <div>
-              <span className="text-slate-500 text-xs">Longitude</span>
+              <span className="text-zinc-500 text-xs">Longitude</span>
               <div className="font-mono font-semibold">{gpsData.longitude.toFixed(6)}</div>
             </div>
             <div>
-              <span className="text-slate-500 text-xs">Speed</span>
+              <span className="text-zinc-500 text-xs">Speed</span>
               <div className="font-mono font-semibold">{gpsData.speed.toFixed(1)} km/h</div>
             </div>
             <div>
-              <span className="text-slate-500 text-xs">Accuracy</span>
+              <span className="text-zinc-500 text-xs">Accuracy</span>
               <div className="font-mono font-semibold">±{gpsData.accuracy.toFixed(0)}m</div>
             </div>
           </div>
@@ -226,16 +226,16 @@ export default function Scan() {
 
         {/* Sensor Graphs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <SensorGraph dataHistory={accHistory} label="Acceleration" color="#6366f1" unit="m/s²" />
-          <SensorGraph dataHistory={gyroHistory} label="Gyroscope" color="#06b6d4" unit="rad/s" />
-          <SensorGraph dataHistory={speedHistory} label="Speed" color="#10b981" unit="km/h" />
+          <SensorGraph dataHistory={accHistory} label="Acceleration" color="#18181b" unit="m/s²" />
+          <SensorGraph dataHistory={gyroHistory} label="Gyroscope" color="#71717a" unit="rad/s" />
+          <SensorGraph dataHistory={speedHistory} label="Speed" color="#15803d" unit="km/h" />
         </div>
 
         {/* Detected Hazards */}
         {detectedHazards.length > 0 && (
           <div>
             <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-              <AlertTriangle size={18} className="text-amber-400" />
+              <AlertTriangle size={18} className="text-amber-600" />
               Detected Hazards
             </h2>
             <div className="space-y-3">

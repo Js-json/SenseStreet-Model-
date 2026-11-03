@@ -13,8 +13,8 @@ const createIcon = (color, emoji) => {
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
-      border: 3px solid rgba(255,255,255,0.3);
-      box-shadow: 0 4px 12px ${color}66;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     ">${emoji}</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
@@ -26,7 +26,7 @@ const hazardIcons = {
   pothole: createIcon('#f59e0b', '🕳️'),
   sudden_brake: createIcon('#f97316', '🛑'),
   crash: createIcon('#ef4444', '💥'),
-  default: createIcon('#6366f1', '⚠️'),
+  default: createIcon('#52525b', '⚠️'),
 };
 
 function getIcon(type) {
@@ -57,10 +57,10 @@ export default function MapView({ hazards = [], center = [9.98, 76.29], zoom = 1
         style={{ height: '100%', width: '100%', minHeight: 300 }}
         zoomControl={false}
       >
-      <TileLayer
-     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-   />
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
         <RecenterMap center={center} />
         {hazards.map((h, i) => (
           <Marker key={h.id || i} position={[h.latitude, h.longitude]} icon={getIcon(h.type)}>

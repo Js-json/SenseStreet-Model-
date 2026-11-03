@@ -67,36 +67,36 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart3 size={24} className="text-indigo-400" />
+            <BarChart3 size={24} className="text-zinc-900" />
             Dashboard
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-zinc-500">
             Road safety analytics
-            {usingDemo && <span className="text-amber-400 ml-2">(Demo Data)</span>}
+            {usingDemo && <span className="text-amber-600 ml-2">(Demo Data)</span>}
           </p>
         </div>
 
         {/* Stat Cards Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="glass-card stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(6, 182, 212, 0.12)' }}>
-              <Wifi size={22} className="text-cyan-400" />
+            <div className="stat-icon" style={{ background: 'rgba(24, 24, 27, 0.06)' }}>
+              <Wifi size={22} className="text-zinc-900" />
             </div>
-            <span className="stat-value text-cyan-400">{activeSensors}</span>
+            <span className="stat-value text-zinc-900">{activeSensors}</span>
             <span className="stat-label">Active Sensors</span>
           </div>
           <div className="glass-card stat-card">
             <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.12)' }}>
-              <AlertTriangle size={22} className="text-amber-400" />
+              <AlertTriangle size={22} className="text-amber-600" />
             </div>
-            <span className="stat-value text-amber-400">{todayCount}</span>
+            <span className="stat-value text-amber-600">{todayCount}</span>
             <span className="stat-label">Hazards Today</span>
           </div>
           <div className="glass-card stat-card">
             <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.12)' }}>
-              <Car size={22} className="text-red-400" />
+              <Car size={22} className="text-red-600" />
             </div>
-            <span className="stat-value text-red-400">{crashCount}</span>
+            <span className="stat-value text-red-600">{crashCount}</span>
             <span className="stat-label">Crash Alerts</span>
           </div>
           <div className="glass-card stat-card">
@@ -119,8 +119,8 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <div className="glass-card p-4" style={{ height: '100%', minHeight: 300 }}>
               <div className="flex items-center gap-2 mb-3">
-                <Activity size={16} className="text-indigo-400" />
-                <h3 className="text-sm font-semibold text-slate-300">Hazard Overview</h3>
+                <Activity size={16} className="text-zinc-900" />
+                <h3 className="text-sm font-semibold text-zinc-700">Hazard Overview</h3>
               </div>
               <MapView
                 hazards={hazards.slice(0, 50)}
@@ -137,8 +137,8 @@ export default function Dashboard() {
           {/* Hazard Distribution */}
           <div className="glass-card p-6">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp size={16} className="text-indigo-400" />
-              <h3 className="text-sm font-semibold text-slate-300">Hazard Distribution</h3>
+              <TrendingUp size={16} className="text-zinc-900" />
+              <h3 className="text-sm font-semibold text-zinc-700">Hazard Distribution</h3>
             </div>
             <div className="space-y-4">
               {[
@@ -148,10 +148,10 @@ export default function Dashboard() {
               ].map((item) => (
                 <div key={item.type}>
                   <div className="flex justify-between text-sm mb-1.5">
-                    <span className="text-slate-400">{item.type}</span>
+                    <span className="text-zinc-500">{item.type}</span>
                     <span className="font-semibold" style={{ color: item.color }}>{item.count}</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-800">
+                  <div className="w-full h-2 rounded-full bg-zinc-200">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
@@ -169,27 +169,27 @@ export default function Dashboard() {
           {/* Event Timeline */}
           <div className="glass-card p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Clock size={16} className="text-indigo-400" />
-              <h3 className="text-sm font-semibold text-slate-300">Event Timeline</h3>
+              <Clock size={16} className="text-zinc-900" />
+              <h3 className="text-sm font-semibold text-zinc-700">Event Timeline</h3>
             </div>
             <div className="max-h-64 overflow-y-auto pr-1">
               {hazards.slice(0, 10).map((h, i) => (
                 <div key={h.id || i} className="timeline-item">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold capitalize" style={{
-                      color: h.type === 'crash' ? '#ef4444' : h.type === 'sudden_brake' ? '#f97316' : '#f59e0b'
+                      color: h.type === 'crash' ? '#b91c1c' : h.type === 'sudden_brake' ? '#c2410c' : '#b45309'
                     }}>
                       {h.type?.replace('_', ' ')}
                     </span>
-                    <span className="text-xs text-slate-500">{formatTimeAgo(h.timestamp)}</span>
+                    <span className="text-xs text-zinc-500">{formatTimeAgo(h.timestamp)}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-zinc-500 mt-0.5">
                     Intensity: {h.intensity?.toFixed(1)} · {h.source}
                   </p>
                 </div>
               ))}
               {hazards.length === 0 && (
-                <p className="text-sm text-slate-500 text-center py-4">No events recorded</p>
+                <p className="text-sm text-zinc-500 text-center py-4">No events recorded</p>
               )}
             </div>
           </div>

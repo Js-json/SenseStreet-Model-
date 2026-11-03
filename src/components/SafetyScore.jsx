@@ -20,7 +20,7 @@ export default function SafetyScore({ scoreData }) {
           <circle
             cx="70" cy="70" r="54"
             fill="none"
-            stroke="rgba(148, 163, 184, 0.1)"
+            stroke="#f4f4f5"
             strokeWidth="10"
           />
           {/* Score ring */}
@@ -38,7 +38,7 @@ export default function SafetyScore({ scoreData }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-3xl font-black" style={{ color }}>{score}</span>
-          <span className="text-xs text-slate-500 font-medium">/ 100</span>
+          <span className="text-xs text-zinc-500 font-medium">/ 100</span>
         </div>
       </div>
 
@@ -49,16 +49,16 @@ export default function SafetyScore({ scoreData }) {
 
       <div className="flex gap-6 text-center">
         <div>
-          <span className="block text-lg font-bold text-amber-400">{potholes}</span>
-          <span className="text-xs text-slate-500">Potholes</span>
+          <span className="block text-lg font-bold text-amber-600">{potholes}</span>
+          <span className="text-xs text-zinc-500">Potholes</span>
         </div>
         <div>
-          <span className="block text-lg font-bold text-red-400">{crashes}</span>
-          <span className="text-xs text-slate-500">Crashes</span>
+          <span className="block text-lg font-bold text-red-600">{crashes}</span>
+          <span className="text-xs text-zinc-500">Crashes</span>
         </div>
         <div>
-          <span className="block text-lg font-bold text-orange-400">{brakes}</span>
-          <span className="text-xs text-slate-500">Brakes</span>
+          <span className="block text-lg font-bold text-orange-600">{brakes}</span>
+          <span className="text-xs text-zinc-500">Brakes</span>
         </div>
       </div>
     </div>

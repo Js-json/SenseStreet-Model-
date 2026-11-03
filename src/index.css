@@ -4,25 +4,30 @@
 
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --color-primary: #6366f1;
-  --color-primary-light: #818cf8;
-  --color-primary-dark: #4f46e5;
-  --color-accent: #06b6d4;
-  --color-accent-light: #22d3ee;
-  --color-surface: #0f172a;
-  --color-surface-light: #1e293b;
-  --color-surface-lighter: #334155;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-success: #10b981;
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
-  --color-glass: rgba(15, 23, 42, 0.7);
-  --color-glass-border: rgba(99, 102, 241, 0.2);
+  /* Neutral light palette: ink on warm off-white, one dark accent */
+  --color-primary: #18181b;
+  --color-primary-light: #3f3f46;
+  --color-primary-dark: #09090b;
+  --color-accent: #15803d;
+  --color-accent-light: #16a34a;
+  --color-surface: #fafaf9;
+  --color-surface-light: #ffffff;
+  --color-surface-lighter: #e4e4e7;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #16a34a;
+  --color-text: #18181b;
+  --color-text-muted: #71717a;
+  --color-glass: #ffffff;
+  --color-glass-border: #e4e4e7;
 }
 
 /* ===== Base Styles ===== */
 
+/* Tailwind's preflight already resets margin/padding/box-sizing inside
+   @layer base. Don't redeclare an unlayered `* { margin:0; padding:0 }` here:
+   unlayered CSS beats Tailwind v4's layered utilities and silently disables
+   every mx-auto, p-*, m-*, gap-adjacent spacing class. */
 
 html {
   scroll-behavior: smooth;
@@ -49,50 +54,22 @@ body {
   border-radius: 3px;
 }
 
-/* ===== Glassmorphism Card ===== */
+/* ===== Card (class name kept for existing markup) ===== */
 .glass-card {
   background: var(--color-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--color-glass-border);
   border-radius: 16px;
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+  border-color: #d4d4d8;
+  box-shadow: 0 4px 16px rgba(24, 24, 27, 0.06);
 }
-.leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
-/* ===== Gradient Background Orbs ===== */
+
+/* Decorative background orbs are disabled in the light theme */
 .bg-orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  pointer-events: none;
-  z-index: 0;
-}
-.bg-orb-1 {
-  width: 600px;
-  height: 600px;
-  background: var(--color-primary);
-  top: -200px;
-  right: -200px;
-}
-.bg-orb-2 {
-  width: 500px;
-  height: 500px;
-  background: var(--color-accent);
-  bottom: -150px;
-  left: -150px;
-}
-.bg-orb-3 {
-  width: 400px;
-  height: 400px;
-  background: #a855f7;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  display: none;
 }
 
 /* ===== Button Styles ===== */
@@ -101,8 +78,8 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: white;
+  background: var(--color-primary);
+  color: #fafaf9;
   border: none;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -112,8 +89,9 @@ body {
   text-decoration: none;
 }
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(24, 24, 27, 0.18);
 }
 .btn-primary:active {
   transform: translateY(0);
@@ -135,9 +113,10 @@ body {
   text-decoration: none;
 }
 .btn-secondary:hover {
-  background: var(--color-surface-lighter);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 24, 27, 0.08);
 }
 
 .btn-danger {
@@ -145,7 +124,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  background: var(--color-danger);
   color: white;
   border: none;
   border-radius: 12px;
@@ -155,8 +134,8 @@ body {
   transition: all 0.3s ease;
 }
 .btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25);
 }
 
 /* ===== Stat Cards ===== */
@@ -233,9 +212,9 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--color-glass-border);
   display: flex;
   justify-content: space-around;
@@ -257,15 +236,16 @@ body {
   border-radius: 8px;
 }
 .bottom-nav a.active {
-  color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
 }
 .bottom-nav a:hover {
-  color: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 /* ===== Leaflet overrides ===== */
 .leaflet-container {
-  background: var(--color-surface) !important;
+  background: #e4e4e7 !important;
   border-radius: 16px;
 }
 .leaflet-popup-content-wrapper {
@@ -309,7 +289,7 @@ body {
 }
 .form-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 .form-input::placeholder {
   color: var(--color-text-muted);
@@ -341,7 +321,7 @@ body {
 }
 .form-select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
 /* ===== Page padding for bottom nav ===== */

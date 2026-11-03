@@ -7,13 +7,13 @@ const features = [
     icon: Smartphone,
     title: 'Sensor Detection',
     desc: 'Uses accelerometer, gyroscope & GPS to auto-detect road hazards.',
-    color: '#6366f1',
+    color: '#18181b',
   },
   {
     icon: Map,
     title: 'Live Hazard Map',
     desc: 'Community-driven map showing potholes, crashes & braking events.',
-    color: '#06b6d4',
+    color: '#18181b',
   },
   {
     icon: Shield,
@@ -47,20 +47,20 @@ export default function Home() {
         {/* Hero */}
         <div className="text-center pt-12 pb-10 md:pt-20 md:pb-14">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <div className="w-14 h-14 rounded-2xl bg-zinc-900 flex items-center justify-center shadow-md">
               <Radar size={28} className="text-white" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 text-zinc-900">
             SenseStreet
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-xl mx-auto font-light leading-relaxed">
+          <p className="text-lg md:text-xl text-zinc-600 max-w-xl mx-auto font-light leading-relaxed">
             Smart Road Safety Network — Detect hazards, protect communities, and make every road safer.
           </p>
 
           <div className="flex items-center justify-center gap-2 mt-6">
             <div className="pulse-dot" />
-            <span className="text-xs font-medium text-emerald-400 tracking-wide uppercase">System Active</span>
+            <span className="text-xs font-medium text-emerald-700 tracking-wide uppercase">System Active</span>
           </div>
         </div>
 
@@ -89,7 +89,7 @@ export default function Home() {
 
         {/* Features */}
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">
+          <h2 className="text-center text-sm font-bold text-zinc-500 uppercase tracking-widest mb-8">
             How It Works
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -104,7 +104,7 @@ export default function Home() {
                     <Icon size={22} color={f.color} />
                   </div>
                   <h3 className="font-bold text-base mb-1">{f.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{f.desc}</p>
                 </div>
               );
             })}
@@ -113,7 +113,7 @@ export default function Home() {
 
         {/* Footer */}
         <div className="text-center mt-16 pb-4">
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-zinc-400">
             SenseStreet v1.0 · Powered by smartphone sensors · Built for safer roads
           </p>
         </div>

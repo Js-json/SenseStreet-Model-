@@ -88,11 +88,11 @@ export default function Report() {
         <div className="bg-orb bg-orb-2" />
         <div className="page-content flex items-center justify-center" style={{ minHeight: '70vh' }}>
           <div className="glass-card p-10 text-center max-w-sm">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-emerald-400" />
+            <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={32} className="text-emerald-700" />
             </div>
             <h2 className="text-xl font-bold mb-2">Report Submitted!</h2>
-            <p className="text-sm text-slate-400">Your hazard report has been sent to the community map. Thank you for helping make roads safer.</p>
+            <p className="text-sm text-zinc-500">Your hazard report has been sent to the community map. Thank you for helping make roads safer.</p>
           </div>
         </div>
       </div>
@@ -109,10 +109,10 @@ export default function Report() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FileWarning size={24} className="text-amber-400" />
+              <FileWarning size={24} className="text-amber-600" />
               Report Hazard
             </h1>
-            <p className="text-sm text-slate-400 mt-1">Manually report a road hazard you've encountered</p>
+            <p className="text-sm text-zinc-500 mt-1">Manually report a road hazard you've encountered</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -124,7 +124,7 @@ export default function Report() {
                   <label
                     key={t.value}
                     className={`glass-card p-4 flex items-center gap-3 cursor-pointer transition-all ${
-                      formData.type === t.value ? 'border-indigo-500/50 shadow-lg shadow-indigo-500/10' : ''
+                      formData.type === t.value ? 'border-zinc-900 shadow-md' : ''
                     }`}
                   >
                     <input
@@ -137,11 +137,11 @@ export default function Report() {
                     />
                     <div
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        formData.type === t.value ? 'border-indigo-400' : 'border-slate-600'
+                        formData.type === t.value ? 'border-zinc-900' : 'border-zinc-300'
                       }`}
                     >
                       {formData.type === t.value && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
                       )}
                     </div>
                     <span className="text-sm font-medium">{t.label}</span>
@@ -199,9 +199,9 @@ export default function Report() {
                   max="50"
                   value={formData.intensity}
                   onChange={handleChange}
-                  className="flex-1 accent-indigo-500"
+                  className="flex-1 accent-zinc-900"
                 />
-                <span className="text-lg font-bold text-indigo-400 w-10 text-right">{formData.intensity}</span>
+                <span className="text-lg font-bold text-zinc-900 w-10 text-right">{formData.intensity}</span>
               </div>
             </div>
 
@@ -220,7 +220,7 @@ export default function Report() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
                 <AlertTriangle size={16} />
                 {error}
               </div>

@@ -4,19 +4,19 @@ import { AlertTriangle, CircleAlert, Car } from 'lucide-react';
 const typeConfig = {
   pothole: {
     icon: CircleAlert,
-    color: '#f59e0b',
+    color: '#b45309',
     bg: 'rgba(245, 158, 11, 0.12)',
     label: 'Pothole',
   },
   sudden_brake: {
     icon: Car,
-    color: '#f97316',
+    color: '#c2410c',
     bg: 'rgba(249, 115, 22, 0.12)',
     label: 'Sudden Brake',
   },
   crash: {
     icon: AlertTriangle,
-    color: '#ef4444',
+    color: '#b91c1c',
     bg: 'rgba(239, 68, 68, 0.12)',
     label: 'Crash',
   },
@@ -48,11 +48,11 @@ export default function HazardCard({ hazard, compact = false }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold" style={{ color: config.color }}>{config.label}</div>
-          <div className="text-xs text-slate-500 truncate">
+          <div className="text-xs text-zinc-500 truncate">
             Int: {hazard.intensity?.toFixed(1)} · {hazard.source}
           </div>
         </div>
-        <div className="text-xs text-slate-500 shrink-0">{formatTimeAgo(hazard.timestamp)}</div>
+        <div className="text-xs text-zinc-500 shrink-0">{formatTimeAgo(hazard.timestamp)}</div>
       </div>
     );
   }
@@ -68,16 +68,16 @@ export default function HazardCard({ hazard, compact = false }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
           <h4 className="text-sm font-bold" style={{ color: config.color }}>{config.label}</h4>
-          <span className="text-xs text-slate-500">{formatTimeAgo(hazard.timestamp)}</span>
+          <span className="text-xs text-zinc-500">{formatTimeAgo(hazard.timestamp)}</span>
         </div>
-        <p className="text-xs text-slate-400 mb-1">
-          Intensity: <span className="font-semibold text-slate-300">{hazard.intensity?.toFixed(1)}</span> · Source: <span className="capitalize">{hazard.source}</span>
+        <p className="text-xs text-zinc-500 mb-1">
+          Intensity: <span className="font-semibold text-zinc-800">{hazard.intensity?.toFixed(1)}</span> · Source: <span className="capitalize">{hazard.source}</span>
         </p>
-        <p className="text-xs text-slate-500 font-mono">
+        <p className="text-xs text-zinc-500 font-mono">
           📍 {hazard.latitude?.toFixed(4)}, {hazard.longitude?.toFixed(4)}
         </p>
         {hazard.description && (
-          <p className="text-xs text-slate-400 mt-1 italic">{hazard.description}</p>
+          <p className="text-xs text-zinc-500 mt-1 italic">{hazard.description}</p>
         )}
       </div>
     </div>
