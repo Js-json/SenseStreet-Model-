@@ -3,6 +3,7 @@ import { Map as MapIcon, Filter, RefreshCw, Layers } from 'lucide-react';
 import MapView from '../components/MapView';
 import HazardCard from '../components/HazardCard';
 import { subscribeToHazards } from '../services/hazardService';
+import { getProfileName, PROFILES } from '../services/sensorService';
 
 const HAZARD_TYPES = ['all', 'pothole', 'sudden_brake', 'crash'];
 
@@ -40,6 +41,8 @@ export default function MapPage() {
   }, []);
 
   const filtered = filter === 'all' ? hazards : hazards.filter((h) => h.type === filter);
+  // Toy-car runs are a few metres across, so zoom in much closer than for a real road
+  const zoom = PROFILES[getProfileName()].mapZoom;
   const center = hazards.length > 0 ? [hazards[0].latitude, hazards[0].longitude] : [9.98, 76.29];
 
   return (
@@ -94,7 +97,7 @@ export default function MapPage() {
             <MapView
               hazards={filtered}
               center={center}
-              zoom={14}
+              zoom={zoom}
               style={{ height: '100%' }}
               className="border border-zinc-200"
             />

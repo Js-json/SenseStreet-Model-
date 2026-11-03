@@ -1,17 +1,57 @@
 /**
  * SenseStreet Sensor Service
  * Encapsulates DeviceMotion, DeviceOrientation, and Geolocation APIs.
- * Provides hazard detection via threshold-based logic.
+ * Hazard classification lives in hazardDetector.js (profile-based, calibrated).
  */
 
-const THRESHOLDS = {
-  POTHOLE_ACC: 18,
-  POTHOLE_MIN_SPEED: 15,
-  BRAKE_ACC_CHANGE: -10,
-  BRAKE_MIN_SPEED: 20,
-  CRASH_ACC: 30,
-  CRASH_GYRO: 8,
-};
+import { HazardDetector, PROFILES } from './hazardDetector';
+
+const PROFILE_KEY = 'sensestreet_profile';
+const CAL_KEY = (profile) => `sensestreet_calibration_${profile}`;
+
+/** Which vehicle profile is selected ('car' | 'toy'). Persisted. */
+export function getProfileName() {
+  try {
+    const p = localStorage.getItem(PROFILE_KEY);
+    return PROFILES[p] ? p : 'car';
+  } catch {
+    return 'car';
+  }
+}
+
+export function setProfileName(name) {
+  try {
+    if (PROFILES[name]) localStorage.setItem(PROFILE_KEY, name);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** Saved calibration for a profile: { sigma, fwdSign } or null. */
+export function getCalibration(profile = getProfileName()) {
+  try {
+    const raw = localStorage.getItem(CAL_KEY(profile));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCalibration(profile, cal) {
+  try {
+    localStorage.setItem(CAL_KEY(profile), JSON.stringify({ sigma: cal.sigma, fwdSign: cal.fwdSign }));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+export function clearCalibration(profile = getProfileName()) {
+  try {
+    localStorage.removeItem(CAL_KEY(profile));
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 let motionListener = null;
 let orientationListener = null;
@@ -19,13 +59,22 @@ let geoWatchId = null;
 
 /**
  * Start listening to device motion events.
- * @param {Function} onData - callback receiving { ax, ay, az, magnitude, rotAlpha, rotBeta, rotGamma }
+ *
+ * Mounting: the TOP EDGE of the phone should point toward the FRONT of the vehicle.
+ *
+ * @param {Function} onData - callback receiving { t, hasAccel, ax, ay, az, magnitude, rotAlpha, rotBeta, rotGamma, gyroMagnitude }
+ *                            (gyro values are in degrees per second, as reported by browsers)
  * @param {Function} onHazard - callback receiving { type, intensity }
+ * @param {{ profile?: 'car'|'toy', calibrating?: boolean }} [options]
+ * @returns {HazardDetector} the detector (call finishCalibration() on it after a calibration run)
  */
-export function startMotionSensor(onData, onHazard) {
-  let lastMagnitude = 0;
+export function startMotionSensor(onData, onHazard, options = {}) {
+  const profile = options.profile || getProfileName();
+  const detector = new HazardDetector(profile, getCalibration(profile));
+  if (options.calibrating) detector.startCalibration();
 
   motionListener = (event) => {
+    const now = performance.now(); // one clock read, shared by the recorder and the detector
     const acc = event.accelerationIncludingGravity || {};
     const rot = event.rotationRate || {};
 
@@ -39,7 +88,11 @@ export function startMotionSensor(onData, onHazard) {
     const rotGamma = rot.gamma || 0;
     const gyroMagnitude = Math.sqrt(rotAlpha * rotAlpha + rotBeta * rotBeta + rotGamma * rotGamma);
 
+    const hasAccel = !(acc.x == null && acc.y == null && acc.z == null);
+
     onData({
+      t: now,
+      hasAccel,
       ax: +ax.toFixed(2),
       ay: +ay.toFixed(2),
       az: +az.toFixed(2),
@@ -50,25 +103,15 @@ export function startMotionSensor(onData, onHazard) {
       gyroMagnitude: +gyroMagnitude.toFixed(2),
     });
 
-    // Crash detection
-    if (magnitude > THRESHOLDS.CRASH_ACC && gyroMagnitude > THRESHOLDS.CRASH_GYRO) {
-      onHazard({ type: 'crash', intensity: +magnitude.toFixed(2) });
-    }
-    // Pothole detection
-    else if (magnitude > THRESHOLDS.POTHOLE_ACC) {
-      onHazard({ type: 'pothole', intensity: +magnitude.toFixed(2) });
-    }
+    // Some browsers/desktops fire devicemotion with no accelerometer data (all null)
+    if (!hasAccel) return;
 
-    // Sudden brake detection
-    const accChange = magnitude - lastMagnitude;
-    if (accChange < THRESHOLDS.BRAKE_ACC_CHANGE) {
-      onHazard({ type: 'sudden_brake', intensity: +Math.abs(accChange).toFixed(2) });
-    }
-
-    lastMagnitude = magnitude;
+    const events = detector.update({ t: now, ax, ay, az });
+    for (const e of events) onHazard(e);
   };
 
   window.addEventListener('devicemotion', motionListener);
+  return detector;
 }
 
 /**
@@ -147,4 +190,4 @@ export async function requestMotionPermission() {
   return true; // non-iOS or older iOS → no permission needed
 }
 
-export { THRESHOLDS };
+export { PROFILES };
