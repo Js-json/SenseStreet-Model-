@@ -41,7 +41,9 @@ export const PROFILES = {
     sigmaF0: 0.5, // ...of which only ~0.5 is along the forward axis (the rest is the car rattling up and down)
     idle: 0.25,
     pothole: { floor: 4, k: 5 },
-    crash: { floor: 12, k: 9 },
+    // Floor 20: real crashes on this car were 24-58 m/s², bumps and fast-push rattle 12-16. With a quiet
+    // calibration (sigma ~0.7) 9*sigma is only ~6, so the floor alone has to keep bumps from becoming crashes.
+    crash: { floor: 20, k: 9 },
     // Judged against FORWARD-axis noise: a 150 ms backward push on plain rolling never exceeded 0.3 m/s²
     brake: { floor: 1.4, k: 3, forward: true },
     dedupeMeters: 6,
@@ -316,11 +318,12 @@ export class HazardDetector {
   /**
    * Has the vehicle stopped? Judged against how much it vibrated while rolling,
    * not an absolute number: after a real crash there is still some wobble and
-   * handling (about 0.5 m/s² on a toy car) that is far below rolling vibration.
+   * handling (about 0.5 m/s² on a toy car) that is far below rolling vibration. A very hard hit
+   * (46 m/s²) left the car rocking at 0.40 for over a second, so the limit is 2x idle, not 1.5x.
    */
   _hasStopped(t, preRms = 0) {
     const post = this._rmsBetween(t - STILL_CHECK_MS, t + 1);
-    const limit = Math.max(this.idle * 1.5, 0.3 * Math.max(preRms, this.sigma));
+    const limit = Math.max(this.idle * 2, 0.3 * Math.max(preRms, this.sigma));
     return post < limit;
   }
 
