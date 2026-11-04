@@ -39,7 +39,7 @@ export function getCalibration(profile = getProfileName()) {
 
 export function saveCalibration(profile, cal) {
   try {
-    localStorage.setItem(CAL_KEY(profile), JSON.stringify({ sigma: cal.sigma, fwdSign: cal.fwdSign }));
+    localStorage.setItem(CAL_KEY(profile), JSON.stringify({ sigma: cal.sigma, sigmaF: cal.sigmaF, fwdSign: cal.fwdSign }));
   } catch {
     /* storage unavailable */
   }

@@ -21,6 +21,9 @@ import { SessionRecorder, LABELS } from '../services/sessionRecorder';
 // Seconds to put the phone on the car after tapping Start/Calibrate (toy profile or recording)
 const READY_SECONDS = 4;
 
+// Calibration starts with this many seconds of holding the car still (gravity, direction)
+const CAL_REST_SECONDS = 2;
+
 // Distance in metres between two lat/lon points (haversine)
 function distanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -132,6 +135,7 @@ export default function Scan() {
     const rec = recorderRef.current;
     if (!rec) return;
     rec.label(performance.now(), type);
+    detectorRef.current?.ignoreFor(); // the tap itself jolts the phone; don't mistake it for an event
     setLastMark(`Marked: ${LABELS[type]}`);
     refreshRecStats();
   };
@@ -253,7 +257,7 @@ export default function Scan() {
     refreshRecStats();
     if (result?.ok) {
       saveCalibration(profile, result);
-      setCalibration({ sigma: result.sigma, fwdSign: result.fwdSign });
+      setCalibration({ sigma: result.sigma, sigmaF: result.sigmaF, fwdSign: result.fwdSign });
       setCalMessage(
         result.learnedDirection
           ? 'Calibrated. Normal vibration level and forward direction learned.'
@@ -281,7 +285,7 @@ export default function Scan() {
       const rec = ensureRecorder();
       rec?.phase('calibrate', performance.now());
       setIsCalibrating(true);
-      setCalSecondsLeft(PROFILES[profile].calSeconds);
+      setCalSecondsLeft(PROFILES[profile].calSeconds + CAL_REST_SECONDS);
       detectorRef.current = startMotionSensor(
         (data) => {
           rec?.sample(data);
@@ -429,9 +433,13 @@ export default function Scan() {
           </p>
           {isCalibrating ? (
             <div>
-              <p className="text-sm font-medium mb-2">
-                Calibrating… {Math.max(calSecondsLeft, 0)}s left. Start from rest, then push it straight at your normal pace.
-              </p>
+              {calSecondsLeft > PROFILES[profile].calSeconds ? (
+                <p className="text-lg font-semibold mb-2">Hold the car still… {calSecondsLeft - PROFILES[profile].calSeconds}</p>
+              ) : (
+                <p className="text-lg font-semibold mb-2">
+                  Push it straight now, at your normal pace. {Math.max(calSecondsLeft, 0)}s left
+                </p>
+              )}
               <div className="flex gap-2">
                 <button onClick={finishCalibration} className="btn-secondary text-sm py-2 px-4">Finish now</button>
                 <button onClick={cancelCalibration} className="btn-secondary text-sm py-2 px-4">Cancel</button>

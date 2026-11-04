@@ -36,21 +36,24 @@ export const PROFILES = {
   },
   toy: {
     label: 'Toy car',
-    calSeconds: 6, // short: a hand-pushed toy only needs a few seconds of rolling
-    sigma0: 0.7,
+    calSeconds: 7, // short: a hand-pushed toy only needs a few seconds of rolling
+    sigma0: 1.6, // measured on a real hand-pushed toy car (rolling vibration 1.5-2.1 m/s² RMS)
+    sigmaF0: 0.5, // ...of which only ~0.5 is along the forward axis (the rest is the car rattling up and down)
     idle: 0.25,
     pothole: { floor: 4, k: 5 },
     crash: { floor: 12, k: 9 },
-    brake: { floor: 2, k: 3 },
+    // Judged against FORWARD-axis noise: a 150 ms backward push on plain rolling never exceeded 0.3 m/s²
+    brake: { floor: 1.4, k: 3, forward: true },
     dedupeMeters: 6,
     maxGpsAccuracy: 25,
     mapZoom: 18,
   },
 };
 
-const IMPACT_WINDOW_MS = 120; // collect the peak of a spike for this long
+const EPISODE_GAP_MS = 350; // spikes closer together than this are ONE impact (a crash bounces)
 const CRASH_STILL_MS = 1500; // car must be still this long after a crash spike
 const STILL_CHECK_MS = 800; // ...judged over the last this-many ms
+const TAP_IGNORE_MS = 700; // jolt from tapping the phone's screen
 const BRAKE_MIN_MS = 150; // braking must be sustained at least this long
 const COOLDOWN_MS = 1500; // per event type
 const GRAVITY_TAU_MS = 1500;
@@ -76,6 +79,7 @@ export class HazardDetector {
     this.profile = PROFILES[this.profileName];
 
     this.sigma = calibration?.sigma > 0 ? calibration.sigma : this.profile.sigma0;
+    this.sigmaF = calibration?.sigmaF > 0 ? calibration.sigmaF : this.profile.sigmaF0 ?? this.sigma;
     this.fwdSign = calibration?.fwdSign === -1 ? -1 : 1;
 
     this.calibrating = false;
@@ -88,11 +92,12 @@ export class HazardDetector {
     this._movHist = []; // [{t, moving}]
     this._l2Hist = []; // [{t, l2}] for stillness checks
 
-    this._impact = null; // {t0, peakLin, peakV, wasMoving}
-    this._crashPending = null; // {deadline, peak, peakV}
+    this._impact = null; // {t0, lastSpike, peakLin, peakV, wasMoving, preRms}
+    this._crashPending = null; // {deadline, peak, peakV, preRms}
     this._brakeRun = null; // {t0, sum, n}
     this._fs = 0; // smoothed forward acceleration
     this._gateMs = 0; // how long gravity learning has been frozen
+    this._suppressUntil = -Infinity; // ignore new events until this time (screen taps)
     this._lastImpactEnd = -Infinity;
     this._lastEmit = {};
   }
@@ -112,7 +117,7 @@ export class HazardDetector {
     return {
       pothole: Math.max(p.pothole.floor, p.pothole.k * this.sigma),
       crash: Math.max(p.crash.floor, p.crash.k * this.sigma),
-      brake: Math.max(p.brake.floor, p.brake.k * this.sigma),
+      brake: Math.max(p.brake.floor, p.brake.k * (p.brake.forward ? this.sigmaF : this.sigma)),
     };
   }
 
@@ -121,6 +126,7 @@ export class HazardDetector {
     this.calibrating = true;
     this._cal = {
       s2: this.profile.sigma0 ** 2,
+      s2F: (this.profile.sigmaF0 ?? this.profile.sigma0) ** 2,
       n: 0,
       stillSince: null,
       launchT: null,
@@ -139,8 +145,15 @@ export class HazardDetector {
       return { ok: false, reason: 'Not enough movement detected. Drive the car for the full time.' };
     }
     this.sigma = Math.min(Math.max(Math.sqrt(c.s2), 0.1), 5);
+    this.sigmaF = Math.min(Math.max(Math.sqrt(c.s2F), 0.1), 3);
     if (c.votes !== 0) this.fwdSign = c.votes > 0 ? 1 : -1;
-    return { ok: true, sigma: +this.sigma.toFixed(3), fwdSign: this.fwdSign, learnedDirection: c.votes !== 0 };
+    return {
+      ok: true,
+      sigma: +this.sigma.toFixed(3),
+      sigmaF: +this.sigmaF.toFixed(3),
+      fwdSign: this.fwdSign,
+      learnedDirection: c.votes !== 0,
+    };
   }
 
   // ---------- main entry ----------
@@ -210,19 +223,35 @@ export class HazardDetector {
     const th = this.thresholds;
     const out = [];
 
-    // 3) impact window (pothole / crash share one spike detector)
-    if (!this._impact && !this._crashPending && (Math.abs(v) > th.pothole || l > th.crash)) {
-      this._impact = { t0: t, peakLin: l, peakV: Math.abs(v), wasMoving: this._wasMoving(t - LOOKBACK_MS) };
+    // 3) impact episodes (pothole / crash share one spike detector).
+    // A real crash is several bounces (hit, rebound, hit again), so spikes closer
+    // than EPISODE_GAP_MS belong to one episode, judged once it is over.
+    const isSpike = Math.abs(v) > th.pothole || l > th.crash;
+    if (!this._impact && !this._crashPending && isSpike && t >= this._suppressUntil) {
+      this._impact = {
+        t0: t,
+        lastSpike: t,
+        peakLin: l,
+        peakV: Math.abs(v),
+        wasMoving: this._wasMoving(t - LOOKBACK_MS),
+        preRms: this._rmsBetween(t - 1200, t - 150),
+      };
     } else if (this._impact) {
       this._impact.peakLin = Math.max(this._impact.peakLin, l);
       this._impact.peakV = Math.max(this._impact.peakV, Math.abs(v));
-      if (t - this._impact.t0 >= IMPACT_WINDOW_MS) {
+      if (isSpike) this._impact.lastSpike = t;
+      if (t - this._impact.lastSpike >= EPISODE_GAP_MS) {
         const im = this._impact;
         this._impact = null;
         this._lastImpactEnd = t;
         if (im.wasMoving) {
           if (im.peakLin > th.crash) {
-            this._crashPending = { deadline: t + CRASH_STILL_MS, peak: im.peakLin, peakV: im.peakV };
+            this._crashPending = {
+              deadline: im.lastSpike + CRASH_STILL_MS,
+              peak: im.peakLin,
+              peakV: im.peakV,
+              preRms: im.preRms,
+            };
           } else if (im.peakV > th.pothole) {
             this._emit(out, 'pothole', im.peakV, t);
           }
@@ -230,18 +259,18 @@ export class HazardDetector {
       }
     }
 
-    // crash = big impact AND the vehicle is (nearly) stationary afterwards
+    // crash = big impact AND the vehicle has (nearly) stopped afterwards
     if (this._crashPending && t >= this._crashPending.deadline) {
       const cp = this._crashPending;
       this._crashPending = null;
       this._lastImpactEnd = t;
-      if (this._stillOverLast(t, STILL_CHECK_MS)) this._emit(out, 'crash', cp.peak, t);
+      if (this._hasStopped(t, cp.preRms)) this._emit(out, 'crash', cp.peak, t);
       else if (cp.peakV > th.pothole) this._emit(out, 'pothole', cp.peakV, t); // just a big bump
     }
 
     // 4) sudden brake: sustained backward push on the forward axis
     const impactBusy = this._impact || this._crashPending || t - this._lastImpactEnd < 500;
-    if (impactBusy || !this._wasMoving(t - BRAKE_LOOKBACK_MS) || fn <= 0.2) {
+    if (impactBusy || t < this._suppressUntil || !this._wasMoving(t - BRAKE_LOOKBACK_MS) || fn <= 0.2) {
       this._brakeRun = null;
     } else if (this._fs < -th.brake) {
       if (!this._brakeRun) this._brakeRun = { t0: t, sum: 0, n: 0, fired: false };
@@ -260,7 +289,13 @@ export class HazardDetector {
       const clamp = 4 * this.sigma;
       const lc = Math.min(l, clamp);
       const s2 = this.sigma * this.sigma;
-      this.sigma = Math.sqrt(s2 + alphaFor(dt, 20000) * (lc * lc - s2));
+      // adapt UP quickly (pushed faster than when calibrated), DOWN slowly (stops look quiet)
+      this.sigma = Math.sqrt(s2 + alphaFor(dt, lc * lc > s2 ? 4000 : 20000) * (lc * lc - s2));
+      if (fn > 0.2) {
+        const fc = Math.min(Math.abs(f), 4 * this.sigmaF);
+        const sF2 = this.sigmaF * this.sigmaF;
+        this.sigmaF = Math.sqrt(sF2 + alphaFor(dt, fc * fc > sF2 ? 4000 : 20000) * (fc * fc - sF2));
+      }
     }
 
     return out;
@@ -273,11 +308,26 @@ export class HazardDetector {
     return this._movHist.length ? this._movHist[this._movHist.length - 1].moving : false;
   }
 
-  _stillOverLast(t, ms) {
-    const xs = this._l2Hist.filter((h) => h.t >= t - ms);
-    if (!xs.length) return false;
-    const rms = Math.sqrt(xs.reduce((s, h) => s + h.l2, 0) / xs.length);
-    return rms < this.idle * 1.5;
+  _rmsBetween(a, b) {
+    const xs = this._l2Hist.filter((h) => h.t >= a && h.t < b);
+    return xs.length ? Math.sqrt(xs.reduce((sum, h) => sum + h.l2, 0) / xs.length) : 0;
+  }
+
+  /**
+   * Has the vehicle stopped? Judged against how much it vibrated while rolling,
+   * not an absolute number: after a real crash there is still some wobble and
+   * handling (about 0.5 m/s² on a toy car) that is far below rolling vibration.
+   */
+  _hasStopped(t, preRms = 0) {
+    const post = this._rmsBetween(t - STILL_CHECK_MS, t + 1);
+    const limit = Math.max(this.idle * 1.5, 0.3 * Math.max(preRms, this.sigma));
+    return post < limit;
+  }
+
+  /** Ignore new events for a short while (call right after the user taps the screen). */
+  ignoreFor(ms = TAP_IGNORE_MS, t = this._lastT ?? 0) {
+    this._suppressUntil = Math.max(this._suppressUntil, t + ms);
+    this._brakeRun = null;
   }
 
   _emit(out, type, intensity, t) {
@@ -290,27 +340,54 @@ export class HazardDetector {
     const c = this._cal;
     if (this._moving) {
       c.moveSamples += 1;
-      // fast, winsorised estimate of normal vibration
+      // fast, winsorised estimates of normal vibration (total, and along the forward axis)
       const clamp = 4 * Math.sqrt(c.s2);
       const lc = Math.min(l, clamp);
       c.s2 += alphaFor(dt, 1200) * (lc * lc - c.s2);
+      const fc = Math.min(Math.abs(f), 4 * Math.sqrt(c.s2F));
+      c.s2F += alphaFor(dt, 1200) * (fc * fc - c.s2F);
     }
-    // Learn the forward sign from the first push after standing still.
-    // Sum only the clearly-above-noise forward samples around the launch: the
-    // consistent push adds up, symmetric noise cancels. Works for gentle hand pushes.
-    c.fHist.push({ t, f: f / this.fwdSign });
+
+    // Learn which way is forward from the launch: the first sustained push after the
+    // car has been sitting still. The raw (unsigned) forward component is kept so the
+    // vote does not depend on the sign currently assumed.
+    c.fHist.push({ t, f: f / this.fwdSign, l });
     while (c.fHist.length && c.fHist[0].t < t - 2500) c.fHist.shift();
     if (!this._moving) {
       c.stillSince = c.stillSince ?? t;
     } else {
-      if (c.stillSince !== null && t - c.stillSince > 600 && !c.launchT) c.launchT = t;
+      if (c.stillSince !== null && t - c.stillSince > 200 && !c.launchT) c.launchT = t;
       c.stillSince = null;
     }
     if (c.launchT && t - c.launchT >= 500) {
-      const gate = Math.max(0.3, 1.2 * Math.sqrt(c.s2) / 1.732);
-      let sum = 0;
-      for (const h of c.fHist) if (h.t >= c.launchT - 1500 && Math.abs(h.f) > gate) sum += h.f;
-      if (Math.abs(sum) > 8) c.votes += sum > 0 ? 1 : -1;
+      let quiet = 0;
+      let seenQuiet = false;
+      let run = 0;
+      let dir = 0;
+      let vote = 0;
+      for (const h of c.fHist) {
+        if (h.t < c.launchT - 1500) continue;
+        if (!seenQuiet) {
+          // wait until we have seen the car genuinely at rest (~130 ms of near-zero readings)
+          if (Math.abs(h.f) < 0.25 && h.l < 0.4) {
+            quiet += 1;
+            if (quiet >= 8) seenQuiet = true;
+          } else quiet = 0;
+          continue;
+        }
+        // first run of 4 same-direction forward readings after the rest = the launch push
+        const sgn = Math.abs(h.f) > 0.3 ? Math.sign(h.f) : 0;
+        if (sgn !== 0 && sgn === dir) run += 1;
+        else {
+          dir = sgn;
+          run = sgn !== 0 ? 1 : 0;
+        }
+        if (run >= 4) {
+          vote = dir;
+          break;
+        }
+      }
+      if (vote !== 0) c.votes += vote;
       c.launchT = null;
     }
   }
