@@ -106,7 +106,7 @@ export function startMotionSensor(onData, onHazard, options = {}) {
     // Some browsers/desktops fire devicemotion with no accelerometer data (all null)
     if (!hasAccel) return;
 
-    const events = detector.update({ t: now, ax, ay, az });
+    const events = detector.update({ t: now, ax, ay, az, gyro: gyroMagnitude });
     for (const e of events) onHazard(e);
   };
 

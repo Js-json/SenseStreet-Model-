@@ -45,7 +45,11 @@ export const PROFILES = {
     // calibration (sigma ~0.7) 9*sigma is only ~6, so the floor alone has to keep bumps from becoming crashes.
     crash: { floor: 20, k: 9 },
     // Judged against FORWARD-axis noise: a 150 ms backward push on plain rolling never exceeded 0.3 m/s²
-    brake: { floor: 1.4, k: 3, forward: true },
+    brake: { floor: 1.4, k: 2.6, forward: true },
+    // TRIAL: gyro (deg/s) peak over an impact episode. Fast-push rattle and hand stops peaked at 40-77 deg/s;
+    // real obstacle hits at 95+. Anything below minGyro is treated as rattle, not a bump or crash.
+    // crashGyro stays 0 (off): 3 crashes here were 236-252 but earlier recordings had crashes near 106.
+    gyro: { minGyro: 85, crashGyro: 0 },
     dedupeMeters: 6,
     maxGpsAccuracy: 25,
     mapZoom: 18,
@@ -56,7 +60,8 @@ const EPISODE_GAP_MS = 350; // spikes closer together than this are ONE impact (
 const CRASH_STILL_MS = 1500; // car must be still this long after a crash spike
 const STILL_CHECK_MS = 800; // ...judged over the last this-many ms
 const TAP_IGNORE_MS = 700; // jolt from tapping the phone's screen
-const BRAKE_MIN_MS = 150; // braking must be sustained at least this long
+const BRAKE_MIN_MS = 80; // braking must be sustained at least this long (real hand stops on the toy lasted 100-250 ms)
+const GYRO_LEAD_MS = 150; // gyro peaks can start slightly before the accelerometer spike is flagged
 const COOLDOWN_MS = 1500; // per event type
 const GRAVITY_TAU_MS = 1500;
 const MOTION_TAU_MS = 700;
@@ -94,7 +99,9 @@ export class HazardDetector {
     this._movHist = []; // [{t, moving}]
     this._l2Hist = []; // [{t, l2}] for stillness checks
 
-    this._impact = null; // {t0, lastSpike, peakLin, peakV, wasMoving, preRms}
+    this._gyroHist = []; // [{t, g}] gyro magnitude (deg/s), last ~0.5 s
+    this._haveGyro = false;
+    this._impact = null; // {t0, lastSpike, peakLin, peakV, peakGyro, wasMoving, preRms}
     this._crashPending = null; // {deadline, peak, peakV, preRms}
     this._brakeRun = null; // {t0, sum, n}
     this._fs = 0; // smoothed forward acceleration
@@ -160,7 +167,8 @@ export class HazardDetector {
 
   // ---------- main entry ----------
   /**
-   * @param {{t:number, ax:number, ay:number, az:number}} s raw accelerometer INCLUDING gravity
+   * @param {{t:number, ax:number, ay:number, az:number, gyro?:number}} s raw accelerometer INCLUDING gravity;
+   *        gyro = rotation-rate magnitude in deg/s (optional; without it the gyro gate is skipped)
    * @returns {Array<{type:string, intensity:number}>}
    */
   update(s) {
@@ -174,6 +182,12 @@ export class HazardDetector {
     }
     const dt = Math.max(1, Math.min(t - this._lastT, 250));
     this._lastT = t;
+
+    if (Number.isFinite(s.gyro)) {
+      this._haveGyro = true;
+      this._gyroHist.push({ t, g: s.gyro });
+    }
+    while (this._gyroHist.length && this._gyroHist[0].t < t - 500) this._gyroHist.shift();
 
     // 1) gravity + linear acceleration
     // Freeze gravity learning while a big push/impact is happening, otherwise the
@@ -235,23 +249,26 @@ export class HazardDetector {
         lastSpike: t,
         peakLin: l,
         peakV: Math.abs(v),
+        peakGyro: this._gyroPeak(t - GYRO_LEAD_MS),
         wasMoving: this._wasMoving(t - LOOKBACK_MS),
         preRms: this._rmsBetween(t - 1200, t - 150),
       };
     } else if (this._impact) {
       this._impact.peakLin = Math.max(this._impact.peakLin, l);
       this._impact.peakV = Math.max(this._impact.peakV, Math.abs(v));
+      if (Number.isFinite(s.gyro)) this._impact.peakGyro = Math.max(this._impact.peakGyro, s.gyro);
       if (isSpike) this._impact.lastSpike = t;
       if (t - this._impact.lastSpike >= EPISODE_GAP_MS) {
         const im = this._impact;
         this._impact = null;
-        this._lastImpactEnd = t;
-        if (im.wasMoving) {
+        if (!this._isRattle(im.peakGyro)) this._lastImpactEnd = t;
+        if (im.wasMoving && !this._isRattle(im.peakGyro)) {
           if (im.peakLin > th.crash) {
             this._crashPending = {
               deadline: im.lastSpike + CRASH_STILL_MS,
               peak: im.peakLin,
               peakV: im.peakV,
+              peakGyro: im.peakGyro,
               preRms: im.preRms,
             };
           } else if (im.peakV > th.pothole) {
@@ -266,12 +283,16 @@ export class HazardDetector {
       const cp = this._crashPending;
       this._crashPending = null;
       this._lastImpactEnd = t;
-      if (this._hasStopped(t, cp.preRms)) this._emit(out, 'crash', cp.peak, t);
+      const gyroOkForCrash = !this._haveGyro || cp.peakGyro >= (this.profile.gyro?.crashGyro ?? 0);
+      if (gyroOkForCrash && this._hasStopped(t, cp.preRms)) this._emit(out, 'crash', cp.peak, t);
       else if (cp.peakV > th.pothole) this._emit(out, 'pothole', cp.peakV, t); // just a big bump
     }
 
     // 4) sudden brake: sustained backward push on the forward axis
-    const impactBusy = this._impact || this._crashPending || t - this._lastImpactEnd < 500;
+    // An episode only blocks braking once its gyro says it is a real hit; a hand stop on a rattling car
+    // shows up as a vertical spike with little rotation and must not hide the backward push.
+    const realImpact = this._impact && !this._isRattle(this._impact.peakGyro);
+    const impactBusy = realImpact || this._crashPending || t - this._lastImpactEnd < 500;
     if (impactBusy || t < this._suppressUntil || !this._wasMoving(t - BRAKE_LOOKBACK_MS) || fn <= 0.2) {
       this._brakeRun = null;
     } else if (this._fs < -th.brake) {
@@ -308,6 +329,19 @@ export class HazardDetector {
     // moving state at ~tAgo (oldest sample not older than the lookback)
     for (const h of this._movHist) if (h.t >= tAgo) return h.moving;
     return this._movHist.length ? this._movHist[this._movHist.length - 1].moving : false;
+  }
+
+  /** Peak gyro magnitude since time `from` (−Infinity if no gyro data). */
+  _gyroPeak(from) {
+    let p = 0;
+    for (const h of this._gyroHist) if (h.t >= from && h.g > p) p = h.g;
+    return p;
+  }
+
+  /** True if an episode's gyro peak is too small for a real bump/crash (needs gyro data and a configured gate). */
+  _isRattle(peakGyro) {
+    const g = this.profile.gyro;
+    return !!(g && g.minGyro > 0 && this._haveGyro && peakGyro < g.minGyro);
   }
 
   _rmsBetween(a, b) {
