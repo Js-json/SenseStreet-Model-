@@ -45,7 +45,7 @@ export const PROFILES = {
     // calibration (sigma ~0.7) 9*sigma is only ~6, so the floor alone has to keep bumps from becoming crashes.
     crash: { floor: 20, k: 9 },
     // Judged against FORWARD-axis noise: a 150 ms backward push on plain rolling never exceeded 0.3 m/s²
-    brake: { floor: 1.4, k: 2.6, forward: true },
+    brake: { floor: 2.3, k: 2.6, forward: true },
     // TRIAL: gyro (deg/s) peak over an impact episode. Fast-push rattle and hand stops peaked at 40-77 deg/s;
     // real obstacle hits at 95+. Anything below minGyro is treated as rattle, not a bump or crash.
     // crashGyro stays 0 (off): 3 crashes here were 236-252 but earlier recordings had crashes near 106.
@@ -60,7 +60,9 @@ const EPISODE_GAP_MS = 350; // spikes closer together than this are ONE impact (
 const CRASH_STILL_MS = 1500; // car must be still this long after a crash spike
 const STILL_CHECK_MS = 800; // ...judged over the last this-many ms
 const TAP_IGNORE_MS = 700; // jolt from tapping the phone's screen
-const BRAKE_MIN_MS = 80; // braking must be sustained at least this long (real hand stops on the toy lasted 100-250 ms)
+const BRAKE_MIN_MS = 60; // braking must be sustained at least this long (real hand stops on the toy lasted 100-250 ms)
+const VIOLENT_LIN_X = 2; // an impact this many times the crash threshold, with real rotation, is a hit even without a run-up
+const VIOLENT_MIN_GYRO = 150; // deg/s
 const GYRO_LEAD_MS = 150; // gyro peaks can start slightly before the accelerometer spike is flagged
 const COOLDOWN_MS = 1500; // per event type
 const GRAVITY_TAU_MS = 1500;
@@ -262,7 +264,10 @@ export class HazardDetector {
         const im = this._impact;
         this._impact = null;
         if (!this._isRattle(im.peakGyro)) this._lastImpactEnd = t;
-        if (im.wasMoving && !this._isRattle(im.peakGyro)) {
+        // A violent hit (e.g. 69-91 m/s² with 260 deg/s of rotation) on a car that was only just pushed is still a
+        // crash: a tap or handling jolt never looks like that. Needs gyro data; the stillness check below still applies.
+        const violent = this._haveGyro && im.peakLin > VIOLENT_LIN_X * th.crash && im.peakGyro >= VIOLENT_MIN_GYRO;
+        if ((im.wasMoving || violent) && !this._isRattle(im.peakGyro)) {
           if (im.peakLin > th.crash) {
             this._crashPending = {
               deadline: im.lastSpike + CRASH_STILL_MS,
