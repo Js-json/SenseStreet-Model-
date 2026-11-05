@@ -60,6 +60,8 @@ export const PROFILES = {
 const EPISODE_GAP_MS = 350; // spikes closer together than this are ONE impact (a crash bounces)
 const CRASH_STILL_MS = 1500; // car must be still this long after a crash spike
 const STILL_CHECK_MS = 800; // ...judged over the last this-many ms
+const MAX_CRASH_EPISODE_MS = 1700; // a crash is one short bounce (seen: up to 1.07 s); a 2.4 s run of bumps is not a crash
+const MIN_CLEAN_SAMPLES = 12; // ~200 ms of tap-free data needed to judge stillness around a screen tap
 const TAP_IGNORE_MS = 700; // jolt from tapping the phone's screen
 const BRAKE_MIN_MS = 60; // braking must be sustained at least this long (real hand stops on the toy lasted 100-250 ms)
 const VIOLENT_LIN_X = 2; // an impact this many times the crash threshold, with real rotation, is a hit even without a run-up
@@ -110,6 +112,7 @@ export class HazardDetector {
     this._fs = 0; // smoothed forward acceleration
     this._gateMs = 0; // how long gravity learning has been frozen
     this._suppressUntil = -Infinity; // ignore new events until this time (screen taps)
+    this._taps = []; // [{a, b}] tap-jolt windows, excluded from the crash stillness check
     this._lastImpactEnd = -Infinity;
     this._lastEmit = {};
   }
@@ -269,9 +272,10 @@ export class HazardDetector {
         // crash: a tap or handling jolt never looks like that. Needs gyro data; the stillness check below still applies.
         const violent = this._haveGyro && im.peakLin > VIOLENT_LIN_X * th.crash && im.peakGyro >= VIOLENT_MIN_GYRO;
         if ((im.wasMoving || violent) && !this._isRattle(im.peakGyro)) {
-          if (im.peakLin > th.crash) {
+          if (im.peakLin > th.crash && im.lastSpike - im.t0 <= MAX_CRASH_EPISODE_MS) {
             this._crashPending = {
               deadline: im.lastSpike + CRASH_STILL_MS,
+              lastSpike: im.lastSpike,
               peak: im.peakLin,
               peakV: im.peakV,
               peakGyro: im.peakGyro,
@@ -290,7 +294,7 @@ export class HazardDetector {
       this._crashPending = null;
       this._lastImpactEnd = t;
       const gyroOkForCrash = !this._haveGyro || cp.peakGyro >= (this.profile.gyro?.crashGyro ?? 0);
-      if (gyroOkForCrash && this._hasStopped(t, cp.preRms)) this._emit(out, 'crash', cp.peak, t);
+      if (gyroOkForCrash && this._hasStopped(t, cp.preRms, cp.lastSpike + 300)) this._emit(out, 'crash', cp.peak, t);
       else if (cp.peakV > th.pothole) this._emit(out, 'pothole', cp.peakV, t); // just a big bump
     }
 
@@ -361,15 +365,27 @@ export class HazardDetector {
    * handling (about 0.5 m/s² on a toy car) that is far below rolling vibration. A very hard hit
    * (46 m/s²) left the car rocking at 0.40 for over a second, so the limit is 2x idle, not 1.5x.
    */
-  _hasStopped(t, preRms = 0) {
-    const post = this._rmsBetween(t - STILL_CHECK_MS, t + 1);
+  _hasStopped(t, preRms = 0, widenFrom = null) {
     const limit = Math.max(this.idle * 2, 0.3 * Math.max(preRms, this.sigma));
-    return post < limit;
+    const a = t - STILL_CHECK_MS;
+    if (this._rmsBetween(a, t + 1) < limit) return true;
+    // A screen tap (label / Stop) inside the window jolts the phone, and that says nothing about the car. If a tap
+    // overlaps the window, also judge on the tap-free samples since just after the hit: still counts as stopped.
+    if (widenFrom !== null && this._taps.some((w) => w.b > a && w.a < t)) {
+      const inTap = (h) => this._taps.some((w) => h.t >= w.a && h.t < w.b);
+      const clean = this._l2Hist.filter((h) => h.t >= widenFrom && h.t < t + 1 && !inTap(h));
+      if (clean.length >= MIN_CLEAN_SAMPLES) {
+        return Math.sqrt(clean.reduce((sum, h) => sum + h.l2, 0) / clean.length) < limit;
+      }
+    }
+    return false;
   }
 
   /** Ignore new events for a short while (call right after the user taps the screen). */
   ignoreFor(ms = TAP_IGNORE_MS, t = this._lastT ?? 0) {
     this._suppressUntil = Math.max(this._suppressUntil, t + ms);
+    this._taps.push({ a: t, b: t + ms });
+    if (this._taps.length > 8) this._taps.shift();
     this._brakeRun = null;
   }
 
