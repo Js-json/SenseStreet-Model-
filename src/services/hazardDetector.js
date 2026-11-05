@@ -41,15 +41,16 @@ export const PROFILES = {
     sigmaF0: 0.5, // ...of which only ~0.5 is along the forward axis (the rest is the car rattling up and down)
     idle: 0.25,
     pothole: { floor: 4, k: 5 },
-    // Floor 20: real crashes on this car were 24-58 m/s², bumps and fast-push rattle 12-16. With a quiet
-    // calibration (sigma ~0.7) 9*sigma is only ~6, so the floor alone has to keep bumps from becoming crashes.
-    crash: { floor: 20, k: 9 },
+    // Floor 17: real crashes on this car were 19-85 m/s², bumps and fast-push rattle 12-16 (largest bump seen 15.5).
+    // 16-18 scored the same on 5 recordings; 15 or less turns a bump into a crash, 19 or more misses a 19 m/s² crash.
+    // With a quiet calibration (sigma ~0.6) 9*sigma is only ~5, so the floor alone has to keep bumps from becoming crashes.
+    crash: { floor: 17, k: 9 },
     // Judged against FORWARD-axis noise: a 150 ms backward push on plain rolling never exceeded 0.3 m/s²
     brake: { floor: 2.3, k: 2.6, forward: true },
     // TRIAL: gyro (deg/s) peak over an impact episode. Fast-push rattle and hand stops peaked at 40-77 deg/s;
-    // real obstacle hits at 95+. Anything below minGyro is treated as rattle, not a bump or crash.
+    // real obstacle hits at 95+. Anything below minGyro is treated as rattle, not a bump or crash. Rattle and hand-stop spikes reached 85; real hits started at 95; 88-94 all scored the same on 4 recordings.
     // crashGyro stays 0 (off): 3 crashes here were 236-252 but earlier recordings had crashes near 106.
-    gyro: { minGyro: 85, crashGyro: 0 },
+    gyro: { minGyro: 91, crashGyro: 0 },
     dedupeMeters: 6,
     maxGpsAccuracy: 25,
     mapZoom: 18,
