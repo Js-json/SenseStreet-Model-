@@ -61,6 +61,8 @@ const EPISODE_GAP_MS = 350; // spikes closer together than this are ONE impact (
 const CRASH_STILL_MS = 1500; // car must be still this long after a crash spike
 const STILL_CHECK_MS = 800; // ...judged over the last this-many ms
 const MAX_CRASH_EPISODE_MS = 1700; // a crash is one short bounce (seen: up to 1.07 s); a 2.4 s run of bumps is not a crash
+const POST_CRASH_LOCK_MS = 4000; // after a crash the car is stopped: jolts and handling in the next seconds are not new hazards
+const TAP_LEAD_MS = 300; // the phone starts moving under the finger before the tap is registered
 const MIN_CLEAN_SAMPLES = 12; // ~200 ms of tap-free data needed to judge stillness around a screen tap
 const TAP_IGNORE_MS = 700; // jolt from tapping the phone's screen
 const BRAKE_MIN_MS = 60; // braking must be sustained at least this long (real hand stops on the toy lasted 100-250 ms)
@@ -294,7 +296,11 @@ export class HazardDetector {
       this._crashPending = null;
       this._lastImpactEnd = t;
       const gyroOkForCrash = !this._haveGyro || cp.peakGyro >= (this.profile.gyro?.crashGyro ?? 0);
-      if (gyroOkForCrash && this._hasStopped(t, cp.preRms, cp.lastSpike + 300)) this._emit(out, 'crash', cp.peak, t);
+      if (gyroOkForCrash && this._hasStopped(t, cp.preRms, cp.lastSpike + 300)) {
+        this._emit(out, 'crash', cp.peak, t);
+        // The motion estimate lags (it decays over ~1 s), so picking the car up after a crash looked like a hard brake.
+        this._suppressUntil = Math.max(this._suppressUntil, t + POST_CRASH_LOCK_MS);
+      }
       else if (cp.peakV > th.pothole) this._emit(out, 'pothole', cp.peakV, t); // just a big bump
     }
 
@@ -384,7 +390,7 @@ export class HazardDetector {
   /** Ignore new events for a short while (call right after the user taps the screen). */
   ignoreFor(ms = TAP_IGNORE_MS, t = this._lastT ?? 0) {
     this._suppressUntil = Math.max(this._suppressUntil, t + ms);
-    this._taps.push({ a: t, b: t + ms });
+    this._taps.push({ a: t - TAP_LEAD_MS, b: t + ms });
     if (this._taps.length > 8) this._taps.shift();
     this._brakeRun = null;
   }
